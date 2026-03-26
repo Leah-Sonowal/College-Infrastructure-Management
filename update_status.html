@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Status - Infra Flow</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav>
+        <h2>Infra Flow</h2>
+        <div class="nav-links">
+            <a href="front.html">Home</a>
+            <a href="view_issues.html">View Issues</a>
+            <a href="login.html" class="btn-nav">Logout</a>
+        </div>
+    </nav>
+    <div class="page-container">
+        <div class="card">
+            <h2>Update Issue Status</h2>
+            <p class="subtitle">Modify the status and add notes</p>
+            <form>
+                <div class="form-group">
+                    <label>Select Assigned Issue</label>
+                    <select required>
+                        <option value="" disabled selected>Choose an issue...</option>
+                        <option value="102">#102 - Printer out of ink</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Update Status</label>
+                    <select required>
+                        <option value="" disabled selected>Select new status</option>
+                        <option value="open">Open</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
+                        <option value="closed">Closed</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Comments / Notes</label>
+                    <textarea placeholder="Add any details about the update..." rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn-primary" style="margin-top: 10px;">Update Status</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
