@@ -5,6 +5,8 @@ import config
 
 from routes.auth import auth_bp
 from routes.issues import issue_bp
+from routes.dashboard import dashboard_bp
+
 
 app = Flask(__name__)
 CORS(app)
@@ -20,6 +22,7 @@ mysql.init_app(app)
 # Register Blueprints
 app.register_blueprint(auth_bp)
 app.register_blueprint(issue_bp)
+app.register_blueprint(dashboard_bp)
 
 @app.route('/')
 def home():
