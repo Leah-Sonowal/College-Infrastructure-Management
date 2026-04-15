@@ -32,25 +32,24 @@ def register():
     return jsonify({"message": "User registered successfully"})
 
 
-# ================= LOGIN =================
+# ================= LOGIN ================
 @auth_bp.route('/login', methods=['POST'])
 def login():
     data = request.json
 
     cursor = mysql.connection.cursor()
-    cursor.execute("SELECT user_id, password FROM User WHERE email=%s", (data['email'],))
+    cursor.execute("SELECT user_id, password, user_type FROM User WHERE email=%s", (data['email'],))
     user = cursor.fetchone()
     cursor.close()
 
     if not user:
         return jsonify({"error": "User not found"}), 404
 
-    stored_password = user[1].encode('utf-8')
-
-    if bcrypt.checkpw(data['password'].encode('utf-8'), stored_password):
+    if bcrypt.checkpw(data['password'].encode('utf-8'), user[1].encode('utf-8')):
         return jsonify({
             "message": "Login successful",
-            "user_id": user[0]
+            "user_id": user[0],
+            "role": user[2]   # 🔥 important
         })
     else:
         return jsonify({"error": "Invalid password"}), 401
