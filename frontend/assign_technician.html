@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assign Technician - Infra Flow</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav>
+        <h2>Infra Flow</h2>
+        <div class="nav-links">
+            <a href="front.html">Home</a>
+            <a href="view_issues.html">View Issues</a>
+            <a href="login.html" class="btn-nav">Logout</a>
+        </div>
+    </nav>
+    <div class="page-container">
+        <div class="card">
+            <h2>Assign Technician</h2>
+            <p class="subtitle">Allocate an open issue to a technician</p>
+            <form>
+                <div class="form-group">
+                    <label>Select Issue</label>
+                    <select required>
+                        <option value="" disabled selected>Choose an issue...</option>
+                        <option value="101">#101 - WiFi down in Building A</option>
+                        <option value="104">#104 - Server needs reboot</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Select Technician</label>
+                    <select required>
+                        <option value="" disabled selected>Choose a technician...</option>
+                        <option value="tech1">Tech John</option>
+                        <option value="tech2">Tech Alice</option>
+                        <option value="tech3">Tech Bob</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary" style="margin-top: 10px;">Assign to Issue</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
