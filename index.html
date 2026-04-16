@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Campus Infra Demo</title>
+</head>
+<body>
+
+<h1>Campus Infrastructure System</h1>
+
+<!-- ================= REGISTER ================= -->
+<h2>Register</h2>
+<input id="r_name" placeholder="Name">
+<input id="r_email" placeholder="Email">
+<input id="r_password" placeholder="Password">
+<button onclick="register()">Register</button>
+
+<!-- ================= LOGIN ================= -->
+<h2>Login</h2>
+<input id="l_email" placeholder="Email">
+<input id="l_password" placeholder="Password">
+<button onclick="login()">Login</button>
+
+<p id="loginStatus"></p>
+
+<!-- ================= REPORT ISSUE ================= -->
+<h2>Report Issue</h2>
+<input id="category" placeholder="Category">
+<input id="desc" placeholder="Description">
+<button onclick="reportIssue()">Submit</button>
+
+<!-- ================= GET ISSUES ================= -->
+<h2>All Issues</h2>
+<button onclick="getIssues()">Load Issues</button>
+<ul id="issuesList"></ul>
+
+<!-- ================= UPDATE STATUS ================= -->
+<h2>Update Status</h2>
+<input id="issue_id" placeholder="Issue ID">
+<input id="new_status" placeholder="New Status">
+<button onclick="updateStatus()">Update</button>
+
+<!-- ================= DELETE ISSUE ================= -->
+<h2>Delete Issue</h2>
+<input id="delete_id" placeholder="Issue ID">
+<button onclick="deleteIssue()">Delete</button>
+
+<!-- ================= DASHBOARD ================= -->
+<h2>Dashboard</h2>
+<button onclick="loadDashboard()">Load Stats</button>
+<p id="dashboard"></p>
+
+<script>
+const BASE_URL = "http://127.0.0.1:5000";
+
+let currentUserId = null;
+let currentRole = null;
+
+// ================= REGISTER =================
+function register() {
+    fetch(`${BASE_URL}/register`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            first_name: document.getElementById("r_name").value,
+            last_name: "User",
+            email: document.getElementById("r_email").value,
+            password: document.getElementById("r_password").value,
+            date_of_birth: "2000-01-01",
+            user_type: "Student"
+        })
+    })
+    .then(res => res.json())
+    .then(data => alert(JSON.stringify(data)));
+}
+
+// ================= LOGIN =================
+function login() {
+    fetch(`${BASE_URL}/login`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            email: document.getElementById("l_email").value,
+            password: document.getElementById("l_password").value
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.user_id) {
+            currentUserId = data.user_id;
+            currentRole = data.role;
+            document.getElementById("loginStatus").innerText = "Logged in as " + currentRole;
+        } else {
+            alert(data.error);
+        }
+    });
+}
+
+// ================= REPORT ISSUE =================
+function reportIssue() {
+    fetch(`${BASE_URL}/report-issue`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "role": "Student"
+        },
+        body: JSON.stringify({
+            category: document.getElementById("category").value,
+            description: document.getElementById("desc").value,
+            user_id: currentUserId,
+            urgent: false
+        })
+    })
+    .then(res => res.json())
+    .then(data => alert(JSON.stringify(data)));
+}
+
+// ================= GET ISSUES =================
+function getIssues() {
+    fetch(`${BASE_URL}/issues`)
+    .then(res => res.json())
+    .then(data => {
+        let list = document.getElementById("issuesList");
+        list.innerHTML = "";
+        data.forEach(issue => {
+            let li = document.createElement("li");
+            li.innerText = `ID:${issue.issue_id} | ${issue.category} | ${issue.status}`;
+            list.appendChild(li);
+        });
+    });
+}
+
+// ================= UPDATE STATUS =================
+function updateStatus() {
+    fetch(`${BASE_URL}/update-status/${document.getElementById("issue_id").value}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            "role": "Faculty"
+        },
+        body: JSON.stringify({
+            status: document.getElementById("new_status").value
+        })
+    })
+    .then(res => res.json())
+    .then(data => alert(JSON.stringify(data)));
+}
+
+// ================= DELETE ISSUE =================
+function deleteIssue() {
+    fetch(`${BASE_URL}/delete-issue/${document.getElementById("delete_id").value}`, {
+        method: "DELETE"
+    })
+    .then(res => res.json())
+    .then(data => alert(JSON.stringify(data)));
+}
+
+// ================= DASHBOARD =================
+function loadDashboard() {
+    fetch(`${BASE_URL}/dashboard/total-issues`)
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("dashboard").innerText =
+            "Total Issues: " + data.total_issues;
+    });
+}
+</script>
+
+</body>
+</html>
