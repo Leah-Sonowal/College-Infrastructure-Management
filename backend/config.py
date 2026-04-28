@@ -1,4 +1,11 @@
-MYSQL_HOST = 'localhost'
-MYSQL_USER = 'root'
-MYSQL_PASSWORD = 'yourpassword'
-MYSQL_DB = 'college_maintenance'
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+MYSQL_HOST = os.getenv('MYSQL_HOST', 'localhost')
+MYSQL_USER = os.getenv('MYSQL_USER', 'root')
+MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', '')
+MYSQL_DB = os.getenv('MYSQL_DB', 'campusinfra_db')
+SECRET_KEY = os.getenv('SECRET_KEY', 'change-me-in-production')
+JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'change-jwt-secret-in-production')
