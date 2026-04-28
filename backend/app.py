@@ -9,7 +9,7 @@ from routes.auth import auth_bp
 from routes.issues import issue_bp
 from routes.dashboard import dashboard_bp
 
-# ─── Logging setup ────────────────────────────────────────────────────────────
+# Logging setup 
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s  %(levelname)-8s  %(name)s: %(message)s',
@@ -17,7 +17,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# ─── App factory ──────────────────────────────────────────────────────────────
+# App factory 
 def create_app():
     app = Flask(__name__)
 
@@ -42,12 +42,12 @@ def create_app():
     app.register_blueprint(issue_bp)
     app.register_blueprint(dashboard_bp)
 
-    # ── Health check ──────────────────────────────────────────────────────────
+    # Health check 
     @app.route('/', methods=['GET'])
     def health():
         return jsonify({"status": "ok", "message": "Infra Flow API is running"}), 200
 
-    # ── Global error handlers ─────────────────────────────────────────────────
+    # Global error handlers 
     @app.errorhandler(404)
     def not_found(e):
         return jsonify({"error": "Endpoint not found"}), 404
