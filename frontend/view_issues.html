@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>View Issues - Infra Flow</title>
+    <title>User Dashboard - Infra Flow</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -12,54 +12,77 @@
         <div class="nav-links">
             <a href="front.html">Home</a>
             <a href="report_issue.html">Report Issue</a>
-            <a href="assign_technician.html">Assign Tech</a>
-            <a href="update_status.html">Update Status</a>
             <a href="login.html" class="btn-nav">Logout</a>
         </div>
     </nav>
-    <div class="table-container">
-        <div class="table-header">
-            <h2>Reported Issues</h2>
-            <a href="report_issue.html" class="btn-primary" style="padding: 10px 18px; font-size: 14px;">+ New Issue</a>
+
+    <div class="page-container pt-40-pb-20">
+        <div class="card dashboard-header-card text-left">
+            <h2>Welcome back, User!</h2>
+            <p class="subtitle">Here is an overview of your reported infrastructure issues.</p>
+            <div class="dashboard-actions">
+                <a href="report_issue.html" class="btn-primary">Report a New Issue</a>
+            </div>
         </div>
-        <table>
+    </div>
+
+    <div class="table-container mt-0">
+        <div class="table-header">
+            <h2>Your Recent Issues</h2>
+            <div class="filter-row">
+                <label for="priorityFilter" class="filter-label">Filter by:</label>
+                <select id="priorityFilter" class="filter-select">
+                    <option value="All">All Priorities</option>
+                    <option value="Critical">Critical</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                    <option value="Unassigned">Unassigned</option>
+                </select>
+            </div>
+        </div>
+        <table id="issuesTable">
             <thead>
                 <tr>
-                    <th>ID</th>
+                    <th>Issue ID</th>
                     <th>Title</th>
                     <th>Category</th>
+                    <th>Date Reported</th>
                     <th>Priority</th>
                     <th>Status</th>
-                    <th>Technician</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td style="font-weight: 500;">#101</td>
+                    <td>#101</td>
                     <td>WiFi down in Building A</td>
                     <td>Network</td>
-                    <td>High</td>
-                    <td><span class="status open">Open</span></td>
-                    <td style="color: var(--text-muted);">Unassigned</td>
-                </tr>
-                <tr>
-                    <td style="font-weight:500;">#102</td>
-                    <td>Printer out of ink</td>
-                    <td>Hardware</td>
-                    <td>Low</td>
+                    <td>April 12, 2026</td>
+                    <td data-priority="High"><span class="priority high">High</span></td>
                     <td><span class="status in-progress">In Progress</span></td>
-                    <td>Tech John</td>
                 </tr>
                 <tr>
-                    <td style="font-weight: 500;">#103</td>
-                    <td>System needs update</td>
+                    <td>#105</td>
+                    <td>Projector screen stuck</td>
+                    <td>Hardware</td>
+                    <td>April 14, 2026</td>
+                    <td data-priority="Unassigned"><span class="priority unassigned">Unassigned</span></td>
+                    <td><span class="status open">Open</span></td>
+                </tr>
+                <tr>
+                    <td>#106</td>
+                    <td>Software license expired</td>
                     <td>Software</td>
-                    <td>Medium</td>
+                    <td>April 10, 2026</td>
+                    <td data-priority="Medium"><span class="priority medium">Medium</span></td>
                     <td><span class="status resolved">Resolved</span></td>
-                    <td>Tech Alice</td>
                 </tr>
             </tbody>
         </table>
     </div>
+
+    <footer>
+        <p>© 2026 Infra Flow. All rights reserved.</p>
+    </footer> 
 </body>
 </html>
