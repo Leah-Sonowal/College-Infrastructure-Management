@@ -69,14 +69,19 @@
     <div class="container">
         <h1>Infra Flow</h1>
         <p>Create a new account</p>
-        <form>
-            <input type="text" placeholder="Full Name" required>
-            <input type="email" placeholder="Email address" required>
-            <input type="password" placeholder="Password" required>
-            <select required>
+        <form id="registerForm">
+            <input type="text" id="firstNameInput" placeholder="First Name" required>
+            <input type="text" id="lastNameInput" placeholder="Last Name" required>
+            <input type="date" id="dobInput" required title="Date of Birth">
+            <input type="email" id="emailInput" placeholder="Email address" required>
+            <input type="password" id="passwordInput" placeholder="Password" required>
+            <select id="roleInput" required>
                 <option value="" disabled selected>Select Role</option>
-                <option value="user">User</option>
-                <option value="technician">Technician</option>
+                <option value="Student">Student</option>
+                <option value="Faculty">Faculty</option>
+                <option value="Staff">Staff</option>
+                <option value="Technician">Technician</option>
+                <option value="Admin">Admin</option>
             </select>
             <button type="submit">Register</button>
         </form>
@@ -84,5 +89,41 @@
             <p>Already have an account? <a href="login.html">Login</a></p>
         </div>
     </div>
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const payload = {
+                first_name: document.getElementById('firstNameInput').value,
+                last_name: document.getElementById('lastNameInput').value,
+                date_of_birth: document.getElementById('dobInput').value,
+                email: document.getElementById('emailInput').value,
+                password: document.getElementById('passwordInput').value,
+                user_type: document.getElementById('roleInput').value
+            };
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert('Registration successful! Please login.');
+                    window.location.href = 'login.html';
+                } else {
+                    let errMsg = data.error || 'Registration failed';
+                    if (data.details) {
+                        errMsg += '\n' + data.details.join('\n');
+                    }
+                    alert(errMsg);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Network error. Is the backend running?');
+            }
+        });
+    </script>
 </body>
 </html>
