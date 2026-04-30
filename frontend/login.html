@@ -14,54 +14,61 @@
             <form id="loginForm">
                 <div class="form-group">
                     <label>Email address</label>
-                    <input type="email" id="emailInput" placeholder="name@company.com" required>
+                    <input type="email" id="email" placeholder="name@company.com" required>
                 </div>
                 <div class="form-group">
                     <label>Password</label>
-                    <input type="password" id="passwordInput" placeholder="••••••••" required>
+                    <input type="password" id="password" placeholder="••••••••" required>
                 </div>
-                <button type="submit" class="btn-primary w-100 mt-10">Sign in</button>
+                <p id="errorMsg" style="color:red; font-size:13px; display:none;"></p>
+                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 10px;">Sign in</button>
             </form>
-            <div class="links auth-links">
-                <p><a href="#">Forgot your password?</a></p>
-                <p class="mt-16">Don't have an account? <a href="register.html">Sign up</a></p>
+            <div class="links">
+                <p style="color: var(--text-muted); margin-top: 16px;">Don't have an account? <a href="register.html">Sign up</a></p>
             </div>
         </div>
     </div>
-    <script>
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const email = document.getElementById('emailInput').value;
-        const password = document.getElementById('passwordInput').value;
 
-        try {
-            const response = await fetch('http://127.0.0.1:5000/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
-            const data = await response.json();
-            
-            if (response.ok) {
-                localStorage.setItem('access_token', data.access_token);
+    <script>
+        const API = 'http://localhost:5000';
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('errorMsg');
+            errorMsg.style.display = 'none';
+
+            try {
+                const res = await fetch(`${API}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    errorMsg.textContent = data.error || 'Login failed';
+                    errorMsg.style.display = 'block';
+                    return;
+                }
+
+                // Store session info
                 localStorage.setItem('user_id', data.user_id);
                 localStorage.setItem('role', data.role);
-                
-                // Redirect based on role
-                const role = data.role.toLowerCase();
-                if (role === 'admin' || role === 'faculty' || role === 'staff') {
+                localStorage.setItem('name', data.name);
+
+                // Route based on role
+                if (data.role === 'Faculty' || data.role === 'Staff') {
                     window.location.href = 'admin_dashboard.html';
                 } else {
-                    window.location.href = 'user_dashboard.html';
+                    window.location.href = 'view_issues.html';
                 }
-            } else {
-                alert('Login failed: ' + (data.error || 'Unknown error'));
+            } catch (err) {
+                errorMsg.textContent = 'Cannot connect to server. Is Flask running?';
+                errorMsg.style.display = 'block';
             }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Network error. Is the backend running?');
-        }
-    });
+        });
     </script>
 </body>
 </html>

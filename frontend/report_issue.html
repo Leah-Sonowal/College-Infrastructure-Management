@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Report Issue - Infra Flow</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        #preview { display:none; max-width:100%; margin-top:10px; border-radius:8px; border:1px solid var(--border-color); }
+        .success-msg { display:none; color: green; font-weight:600; margin-top:10px; }
+    </style>
 </head>
 <body>
     <nav>
@@ -12,44 +16,119 @@
         <div class="nav-links">
             <a href="front.html">Home</a>
             <a href="view_issues.html">Issues</a>
-            <a href="login.html" class="btn-nav">Logout</a>
+            <a href="login.html" class="btn-nav" id="logoutBtn">Logout</a>
         </div>
     </nav>
+
     <div class="page-container">
         <div class="card">
             <h2>Report an Issue</h2>
             <p class="subtitle">Provide details about the infrastructure issue</p>
-            <form id="issueForm" enctype="multipart/form-data">
-                <div class="form-group">
-                    <label>Issue Title</label>
-                    <input type="text" id="title" placeholder="e.g. WiFi down in Building A" required>
-                </div>
+
+            <form id="issueForm">
                 <div class="form-group">
                     <label>Description</label>
                     <textarea id="description" rows="4" placeholder="Describe the issue in detail..." required></textarea>
                 </div>
+
                 <div class="form-group">
                     <label>Category</label>
                     <select id="category" required>
                         <option value="">Select Category</option>
-                        <option value="network">Network/Internet</option>
-                        <option value="hardware">Hardware</option>
-                        <option value="software">Software</option>
-                        <option value="other">Other</option>
+                        <option value="Network">Network</option>
+                        <option value="Electrical">Electrical</option>
+                        <option value="Plumbing">Plumbing</option>
+                        <option value="Furniture">Furniture</option>
+                        <option value="Cleanliness">Cleanliness</option>
+                        <option value="Structural">Structural</option>
+                        <option value="Other">Other</option>
                     </select>
                 </div>
- 
+
+                <div class="form-group">
+                    <label>Mark as Urgent?</label>
+                    <select id="urgency">
+                        <option value="false">No</option>
+                        <option value="true">Yes — Urgent</option>
+                    </select>
+                </div>
+
                 <div class="form-group">
                     <label>Upload Photo (Proof)</label>
-                    <input type="file" id="image" accept="image/*" required>
+                    <input type="file" id="image" accept="image/*">
                     <img id="preview">
                 </div>
+
+                <p id="errorMsg" style="color:red; font-size:13px; display:none;"></p>
+                <p class="success-msg" id="successMsg">✅ Issue submitted successfully!</p>
                 <button type="submit" class="btn-primary">Submit Issue</button>
             </form>
         </div>
     </div>
 
-   
+    <script>
+        const API = 'http://localhost:5000';
 
+        document.getElementById('image').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const preview = document.getElementById('preview');
+                preview.src = URL.createObjectURL(file);
+                preview.style.display = 'block';
+            }
+        });
+
+        document.getElementById('issueForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const errorMsg = document.getElementById('errorMsg');
+            const successMsg = document.getElementById('successMsg');
+            errorMsg.style.display = 'none';
+            successMsg.style.display = 'none';
+
+            const description = document.getElementById('description').value;
+            const category = document.getElementById('category').value;
+            const urgency = document.getElementById('urgency').value === 'true';
+            const user_id = localStorage.getItem('user_id');
+            const role = localStorage.getItem('role') || 'Student';
+
+            if (!description || !category) {
+                errorMsg.textContent = 'Please fill in all required fields.';
+                errorMsg.style.display = 'block';
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API}/issues`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'role': role
+                    },
+                    body: JSON.stringify({ description, category, urgency, user_id })
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    errorMsg.textContent = data.error || 'Submission failed.';
+                    errorMsg.style.display = 'block';
+                    return;
+                }
+
+                successMsg.style.display = 'block';
+                this.reset();
+                document.getElementById('preview').style.display = 'none';
+                setTimeout(() => window.location.href = 'view_issues.html', 1500);
+            } catch (err) {
+                errorMsg.textContent = 'Cannot connect to server. Is Flask running?';
+                errorMsg.style.display = 'block';
+            }
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            localStorage.clear();
+            window.location.href = 'login.html';
+        });
+    </script>
 </body>
 </html>

@@ -10,40 +10,95 @@
     <nav>
         <h2>Infra Flow</h2>
         <div class="nav-links">
-            <a href="front.html">Home</a>
+            <a href="admin_dashboard.html">Dashboard</a>
             <a href="view_issues.html">View Issues</a>
-            <a href="login.html" class="btn-nav">Logout</a>
+            <a href="login.html" class="btn-nav" id="logoutBtn">Logout</a>
         </div>
     </nav>
     <div class="page-container">
         <div class="card">
             <h2>Update Issue Status</h2>
-            <p class="subtitle">Modify the status and add notes</p>
-            <form>
+            <p class="subtitle">Modify the current status of an issue</p>
+            <form id="statusForm">
                 <div class="form-group">
-                    <label>Select Assigned Issue</label>
-                    <select required>
-                        <option value="" disabled selected>Choose an issue...</option>
-                        <option value="102">#102 - Printer out of ink</option>
+                    <label>Select Issue</label>
+                    <select id="issue_id" required>
+                        <option value="" disabled selected>Loading issues...</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Update Status</label>
-                    <select required>
+                    <select id="status" required>
                         <option value="" disabled selected>Select new status</option>
-                        <option value="open">Open</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="resolved">Resolved</option>
-                        <option value="closed">Closed</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Under Review">Under Review</option>
+                        <option value="Scheduled">Scheduled</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Resolved">Resolved</option>
+                        <option value="Closed">Closed</option>
+                        <option value="Escalated">Escalated</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>Comments / Notes</label>
-                    <textarea placeholder="Add any details about the update..." rows="3"></textarea>
-                </div>
-                <button type="submit" class="btn-primary mt-10">Update Status</button>
+                <p id="errorMsg" style="color:red; font-size:13px; display:none;"></p>
+                <p id="successMsg" style="color:green; font-weight:600; display:none;">✅ Status updated successfully!</p>
+                <button type="submit" class="btn-primary" style="margin-top: 10px;">Update Status</button>
             </form>
         </div>
     </div>
+
+    <script>
+        const API = 'http://localhost:5000';
+        const role = localStorage.getItem('role') || 'Faculty';
+
+        async function loadIssues() {
+            const res = await fetch(`${API}/issues`, { headers: { role } });
+            const issues = await res.json();
+            const sel = document.getElementById('issue_id');
+            sel.innerHTML = '<option value="" disabled selected>Choose an issue...</option>';
+            issues.forEach(i => {
+                sel.innerHTML += `<option value="${i.issue_id}">#${i.issue_id} — ${i.description.substring(0, 50)} [${i.status}]</option>`;
+            });
+        }
+
+        document.getElementById('statusForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const errorMsg = document.getElementById('errorMsg');
+            const successMsg = document.getElementById('successMsg');
+            errorMsg.style.display = 'none';
+            successMsg.style.display = 'none';
+
+            const issue_id = document.getElementById('issue_id').value;
+            const status = document.getElementById('status').value;
+
+            try {
+                const res = await fetch(`${API}/issues/update-status/${issue_id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'role': role },
+                    body: JSON.stringify({ status })
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    errorMsg.textContent = data.error || 'Update failed.';
+                    errorMsg.style.display = 'block';
+                    return;
+                }
+
+                successMsg.style.display = 'block';
+                setTimeout(() => window.location.href = 'admin_dashboard.html', 1500);
+            } catch (err) {
+                errorMsg.textContent = 'Cannot connect to server. Is Flask running?';
+                errorMsg.style.display = 'block';
+            }
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            localStorage.clear();
+            window.location.href = 'login.html';
+        });
+
+        loadIssues();
+    </script>
 </body>
 </html>

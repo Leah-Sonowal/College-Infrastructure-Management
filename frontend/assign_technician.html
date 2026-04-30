@@ -10,36 +10,121 @@
     <nav>
         <h2>Infra Flow</h2>
         <div class="nav-links">
-            <a href="front.html">Home</a>
+            <a href="admin_dashboard.html">Dashboard</a>
             <a href="view_issues.html">View Issues</a>
-            <a href="login.html" class="btn-nav">Logout</a>
+            <a href="login.html" class="btn-nav" id="logoutBtn">Logout</a>
         </div>
     </nav>
     <div class="page-container">
         <div class="card">
             <h2>Assign Technician</h2>
             <p class="subtitle">Allocate an open issue to a technician</p>
-            <form>
+            <form id="assignForm">
                 <div class="form-group">
                     <label>Select Issue</label>
-                    <select required>
-                        <option value="" disabled selected>Choose an issue...</option>
-                        <option value="101">#101 - WiFi down in Building A</option>
-                        <option value="104">#104 - Server needs reboot</option>
+                    <select id="issue_id" required>
+                        <option value="" disabled selected>Loading issues...</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Select Technician</label>
-                    <select required>
-                        <option value="" disabled selected>Choose a technician...</option>
-                        <option value="tech1">Tech John</option>
-                        <option value="tech2">Tech Alice</option>
-                        <option value="tech3">Tech Bob</option>
+                    <select id="technician_id" required>
+                        <option value="" disabled selected>Loading technicians...</option>
                     </select>
                 </div>
-                <button type="submit" class="btn-primary mt-10">Assign to Issue</button>
+                <div class="form-group">
+                    <label>Slot Date</label>
+                    <input type="date" id="slot_date" required>
+                </div>
+                <div class="form-group">
+                    <label>Start Time</label>
+                    <input type="time" id="slot_start" value="09:00" required>
+                </div>
+                <div class="form-group">
+                    <label>End Time</label>
+                    <input type="time" id="slot_end" value="11:00" required>
+                </div>
+                <p id="errorMsg" style="color:red; font-size:13px; display:none;"></p>
+                <p id="successMsg" style="color:green; font-weight:600; display:none;">✅ Technician assigned!</p>
+                <button type="submit" class="btn-primary" style="margin-top: 10px;">Assign to Issue</button>
             </form>
         </div>
     </div>
+
+    <script>
+        const API = 'http://localhost:5000';
+        const role = localStorage.getItem('role') || 'Faculty';
+
+        // Set minimum date to today
+        document.getElementById('slot_date').min = new Date().toISOString().split('T')[0];
+
+        async function loadIssues() {
+            const res = await fetch(`${API}/issues`, { headers: { role } });
+            const issues = await res.json();
+            const sel = document.getElementById('issue_id');
+            sel.innerHTML = '<option value="" disabled selected>Choose an issue...</option>';
+            issues
+                .filter(i => !['Resolved', 'Closed', 'Scheduled'].includes(i.status))
+                .forEach(i => {
+                    sel.innerHTML += `<option value="${i.issue_id}">#${i.issue_id} - ${i.description.substring(0, 50)}</option>`;
+                });
+        }
+
+        async function loadTechnicians() {
+            const res = await fetch(`${API}/technicians`, { headers: { role } });
+            const techs = await res.json();
+            const sel = document.getElementById('technician_id');
+            sel.innerHTML = '<option value="" disabled selected>Choose a technician...</option>';
+            techs.forEach(t => {
+                sel.innerHTML += `<option value="${t.technician_id}">${t.name} (${t.specialization}) — ${t.status}</option>`;
+            });
+        }
+
+        document.getElementById('assignForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const errorMsg = document.getElementById('errorMsg');
+            const successMsg = document.getElementById('successMsg');
+            errorMsg.style.display = 'none';
+            successMsg.style.display = 'none';
+
+            const payload = {
+                issue_id: document.getElementById('issue_id').value,
+                technician_id: document.getElementById('technician_id').value,
+                slot_date: document.getElementById('slot_date').value,
+                slot_start: document.getElementById('slot_start').value,
+                slot_end: document.getElementById('slot_end').value
+            };
+
+            try {
+                const res = await fetch(`${API}/issues/assign`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'role': role },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    errorMsg.textContent = data.error || 'Assignment failed.';
+                    errorMsg.style.display = 'block';
+                    return;
+                }
+
+                successMsg.style.display = 'block';
+                setTimeout(() => window.location.href = 'admin_dashboard.html', 1500);
+            } catch (err) {
+                errorMsg.textContent = 'Cannot connect to server. Is Flask running?';
+                errorMsg.style.display = 'block';
+            }
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            localStorage.clear();
+            window.location.href = 'login.html';
+        });
+
+        loadIssues();
+        loadTechnicians();
+    </script>
 </body>
 </html>
