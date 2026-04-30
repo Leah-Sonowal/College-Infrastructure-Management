@@ -11,22 +11,57 @@
         <div class="card center-content">
             <h2>Welcome back</h2>
             <p class="subtitle">Enter your credentials to access your account</p>
-            <form>
+            <form id="loginForm">
                 <div class="form-group">
                     <label>Email address</label>
-                    <input type="email" placeholder="name@company.com" required>
+                    <input type="email" id="emailInput" placeholder="name@company.com" required>
                 </div>
                 <div class="form-group">
                     <label>Password</label>
-                    <input type="password" placeholder="••••••••" required>
+                    <input type="password" id="passwordInput" placeholder="••••••••" required>
                 </div>
-                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 10px;">Sign in</button>
+                <button type="submit" class="btn-primary w-100 mt-10">Sign in</button>
             </form>
-            <div class="links">
+            <div class="links auth-links">
                 <p><a href="#">Forgot your password?</a></p>
-                <p style="color: var(--text-muted); margin-top: 16px;">Don't have an account? <a href="register.html">Sign up</a></p>
+                <p class="mt-16">Don't have an account? <a href="register.html">Sign up</a></p>
             </div>
         </div>
     </div>
+    <script>
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const email = document.getElementById('emailInput').value;
+        const password = document.getElementById('passwordInput').value;
+
+        try {
+            const response = await fetch('http://127.0.0.1:5000/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await response.json();
+            
+            if (response.ok) {
+                localStorage.setItem('access_token', data.access_token);
+                localStorage.setItem('user_id', data.user_id);
+                localStorage.setItem('role', data.role);
+                
+                // Redirect based on role
+                const role = data.role.toLowerCase();
+                if (role === 'admin' || role === 'faculty' || role === 'staff') {
+                    window.location.href = 'admin_dashboard.html';
+                } else {
+                    window.location.href = 'user_dashboard.html';
+                }
+            } else {
+                alert('Login failed: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Network error. Is the backend running?');
+        }
+    });
+    </script>
 </body>
 </html>
