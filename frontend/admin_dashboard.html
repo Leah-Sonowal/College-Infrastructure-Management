@@ -4,7 +4,119 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Infra Flow</title>
+    <link rel="styleshe<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Infra Flow</title>
     <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav>
+        <h2>Infra Flow</h2>
+        <div class="nav-links">
+            <a href="front.html">Home</a>
+            <a href="assign_technician.html">Assign Tasks</a>
+            <a href="assign_priority.html">Assign Priority</a>
+            <a href="update_status.html">Update Status</a>
+            <a href="login.html" class="btn-nav">Logout</a>
+        </div>
+    </nav>
+    <div class="page-container pt-40-pb-20">
+        <div class="card dashboard-header-card text-left">
+            <h2>Admin Dashboard</h2>
+            <p class="subtitle">System overview and control center.</p>
+            <div class="dashboard-actions">
+                <a href="assign_technician.html" class="btn-primary">Assign Technician</a>
+                <a href="assign_priority.html" class="btn-primary btn-dark">Assign Priority</a>
+                <a href="update_status.html" class="btn-primary btn-outline-primary">Update Status</a>
+            </div>
+        </div>
+    </div>
+    <div class="table-container mt-0">
+        <div class="table-header">
+            <h2>All Active Issues</h2>
+            <div class="filter-row">
+                <label for="priorityFilter" class="filter-label">Filter by:</label>
+                <select id="priorityFilter" class="filter-select">
+                    <option value="All">All Priorities</option>
+                    <option value="Critical">Critical</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                    <option value="Unassigned">Unassigned</option>
+                </select>
+            </div>
+        </div>
+        <table id="issuesTable">
+            <thead>
+                <tr>
+                    <th>Issue ID</th>
+                    <th>Title</th>
+                    <th>Reported By</th>
+                    <th>Date</th>
+                    <th>Assignee</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>#101</td>
+                    <td>WiFi down in Building A</td>
+                    <td>User A</td>
+                    <td>April 12, 2026</td>
+                    <td>Tech John</td>
+                    <td data-priority="High"><span class="priority high">High</span></td>
+                    <td><span class="status in-progress">In Progress</span></td>
+                </tr>
+                <tr>
+                    <td>#102</td>
+                    <td>Printer out of ink</td>
+                    <td>User B</td>
+                    <td>April 13, 2026</td>
+                    <td>Tech Alice</td>
+                    <td data-priority="Low"><span class="priority low">Low</span></td>
+                    <td><span class="status open">Open</span></td>
+                </tr>
+                <tr>
+                    <td>#104</td>
+                    <td>Server core dump error</td>
+                    <td>Admin</td>
+                    <td>April 14, 2026</td>
+                    <td>Unassigned</td>
+                    <td data-priority="Critical"><span class="priority critical">Critical</span></td>
+                    <td><span class="status open">Open</span></td>
+                </tr>
+                <tr>
+                    <td>#106</td>
+                    <td>Software license expired</td>
+                    <td>User C</td>
+                    <td>April 10, 2026</td>
+                    <td>Tech Bob</td>
+                    <td data-priority="Medium"><span class="priority medium">Medium</span></td>
+                    <td><span class="status resolved">Resolved</span></td>
+                </tr>
+                <tr>
+                    <td>#107</td>
+                    <td>Desktop monitor flicker</td>
+                    <td>User D</td>
+                    <td>April 15, 2026</td>
+                    <td>Unassigned</td>
+                    <td data-priority="Unassigned"><span class="priority unassigned">Unassigned</span></td>
+                    <td><span class="status open">Open</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <footer>
+        <p>&copy 2026 Infra Flow. All rights reserved.</p>
+    </footer> 
+</body>
+</html>
+et" href="styles.css">
 </head>
 <body>
     <nav>
