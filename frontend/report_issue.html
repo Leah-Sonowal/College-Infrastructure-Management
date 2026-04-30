@@ -6,9 +6,7 @@
     <title>Report Issue - Infra Flow</title>
     <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
-
     <nav>
         <h2>Infra Flow</h2>
         <div class="nav-links">
@@ -17,25 +15,19 @@
             <a href="login.html" class="btn-nav">Logout</a>
         </div>
     </nav>
-
     <div class="page-container">
         <div class="card">
             <h2>Report an Issue</h2>
             <p class="subtitle">Provide details about the infrastructure issue</p>
-
-            <!-- IMPORTANT for image upload -->
             <form id="issueForm" enctype="multipart/form-data">
-
                 <div class="form-group">
                     <label>Issue Title</label>
                     <input type="text" id="title" placeholder="e.g. WiFi down in Building A" required>
                 </div>
-
                 <div class="form-group">
                     <label>Description</label>
                     <textarea id="description" rows="4" placeholder="Describe the issue in detail..." required></textarea>
                 </div>
-
                 <div class="form-group">
                     <label>Category</label>
                     <select id="category" required>
@@ -46,68 +38,18 @@
                         <option value="other">Other</option>
                     </select>
                 </div>
-
-                <!-- <div class="form-group">
-                    <label>Priority</label>
-                    <select id="priority" required>
-                        <option value="">Select Priority</option>
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
-                    </select>
-                </div> -->
-
-                <!-- 📸 PHOTO UPLOAD -->
+ 
                 <div class="form-group">
                     <label>Upload Photo (Proof)</label>
                     <input type="file" id="image" accept="image/*" required>
                     <img id="preview">
                 </div>
-
                 <button type="submit" class="btn-primary">Submit Issue</button>
-
-                <!-- ✅ Success Message -->
-                <p class="success-msg" id="successMsg">✅ Issue submitted successfully!</p>
             </form>
         </div>
     </div>
 
-    <script>
-        const imageInput = document.getElementById("image");
-        const preview = document.getElementById("preview");
-
-        // 📸 Image Preview
-        imageInput.addEventListener("change", function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                preview.src = URL.createObjectURL(file);
-                preview.style.display = "block";
-            }
-        });
-
-        // 📩 Form Submit (Frontend only demo)
-        document.getElementById("issueForm").addEventListener("submit", function(e) {
-            e.preventDefault();
-
-            const title = document.getElementById("title").value;
-            const description = document.getElementById("description").value;
-            const category = document.getElementById("category").value;
-            const priority = document.getElementById("priority").value;
-            const image = document.getElementById("image").files[0];
-
-            if (!title || !description || !category || !priority || !image) {
-                alert("Please fill all fields!");
-                return;
-            }
-
-            // Simulate success
-            document.getElementById("successMsg").style.display = "block";
-
-            // Reset form
-            this.reset();
-            preview.style.display = "none";
-        });
-    </script>
+   
 
 </body>
 </html>
