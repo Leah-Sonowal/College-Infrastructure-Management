@@ -1,8 +1,8 @@
 CREATE DATABASE IF NOT EXISTS campusinfra_db;
 USE campusinfra_db;
 
--- USER
-CREATE TABLE IF NOT EXISTS User (
+-- USER (Wrapped in backticks as 'User' is a reserved keyword)
+CREATE TABLE IF NOT EXISTS `User` (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     first_name VARCHAR(20) NOT NULL,
     middle_name VARCHAR(20),
@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS User (
     email VARCHAR(255) NOT NULL UNIQUE,
     date_of_birth DATE NOT NULL,
     age INT,
-    password VARCHAR(255) NOT NULL,          -- ← was missing from original schema
+    password VARCHAR(255) NOT NULL,
     user_availability_start TIME,
     user_availability_end TIME,
     user_availability_status ENUM('Available','Busy','Inactive'),
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS User (
 CREATE TABLE IF NOT EXISTS User_Phone (
     phone_no VARCHAR(15) PRIMARY KEY,
     user_id INT,
-    FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES `User`(user_id) ON DELETE CASCADE
 );
 
 -- LOCATION
@@ -43,8 +43,8 @@ CREATE TABLE IF NOT EXISTS Issue (
     resolution_time INT,
     status ENUM('Pending','Under Review','Scheduled','In Progress','Resolved','Closed','Escalated') DEFAULT 'Pending',
     proof_image VARCHAR(255),
-    building_name VARCHAR(100),
-    room_no VARCHAR(20),
+    building_name VARCHAR(100) NULL, -- Must allow NULL for ON DELETE SET NULL
+    room_no VARCHAR(20) NULL,        -- Must allow NULL for ON DELETE SET NULL
     FOREIGN KEY (building_name, room_no)
         REFERENCES Location(building_name, room_no)
         ON DELETE SET NULL
@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS Appliance (
     quantity_available INT CHECK (quantity_available >= 0)
 );
 
--- ADMIN
+-- ADMINISTRATOR
 CREATE TABLE IF NOT EXISTS Administrator (
     admin_id INT AUTO_INCREMENT PRIMARY KEY,
     admin_name VARCHAR(100) NOT NULL,
@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS Work_Verification (
     admin_checked BOOLEAN DEFAULT FALSE,
     user_checked BOOLEAN DEFAULT FALSE,
     verification_date DATE,
-    FOREIGN KEY (issue_id) REFERENCES Issue(issue_id)
+    FOREIGN KEY (issue_id) REFERENCES Issue(issue_id) ON DELETE CASCADE
 );
 
 -- REPORTS
@@ -111,8 +111,8 @@ CREATE TABLE IF NOT EXISTS Reports (
     report_time DATETIME NOT NULL,
     urgency_flag BOOLEAN DEFAULT FALSE,
     PRIMARY KEY(user_id, issue_id),
-    FOREIGN KEY (user_id) REFERENCES User(user_id),
-    FOREIGN KEY (issue_id) REFERENCES Issue(issue_id)
+    FOREIGN KEY (user_id) REFERENCES `User`(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (issue_id) REFERENCES Issue(issue_id) ON DELETE CASCADE
 );
 
 -- HANDLES
@@ -124,8 +124,8 @@ CREATE TABLE IF NOT EXISTS Handles (
     issue_resolution_type ENUM('Temporary Fix','Permanent Repair','Replacement','Escalated'),
     escalated_level INT CHECK (escalated_level >= 0),
     PRIMARY KEY (admin_id, issue_id),
-    FOREIGN KEY (admin_id) REFERENCES Administrator(admin_id),
-    FOREIGN KEY (issue_id) REFERENCES Issue(issue_id)
+    FOREIGN KEY (admin_id) REFERENCES Administrator(admin_id) ON DELETE CASCADE,
+    FOREIGN KEY (issue_id) REFERENCES Issue(issue_id) ON DELETE CASCADE
 );
 
 -- ASSIGNS
@@ -136,8 +136,8 @@ CREATE TABLE IF NOT EXISTS Assigns (
     assigned_priority ENUM('Normal','Urgent','Immediate'),
     assignment_notes TEXT,
     PRIMARY KEY (admin_id, slot_id),
-    FOREIGN KEY (admin_id) REFERENCES Administrator(admin_id),
-    FOREIGN KEY (slot_id) REFERENCES Slot(slot_id)
+    FOREIGN KEY (admin_id) REFERENCES Administrator(admin_id) ON DELETE CASCADE,
+    FOREIGN KEY (slot_id) REFERENCES Slot(slot_id) ON DELETE CASCADE
 );
 
 -- HAS
@@ -146,8 +146,8 @@ CREATE TABLE IF NOT EXISTS Has (
     technician_id INT,
     technician_role ENUM('Electrician','Plumber','Carpenter','IT Support','General Maintenance'),
     technician_availability_status ENUM('Available','Busy','On Leave'),
-    FOREIGN KEY (slot_id) REFERENCES Slot(slot_id),
-    FOREIGN KEY (technician_id) REFERENCES Technician(technician_id)
+    FOREIGN KEY (slot_id) REFERENCES Slot(slot_id) ON DELETE CASCADE,
+    FOREIGN KEY (technician_id) REFERENCES Technician(technician_id) ON DELETE CASCADE
 );
 
 -- SCHEDULED_IN
@@ -158,8 +158,8 @@ CREATE TABLE IF NOT EXISTS Scheduled_In (
     reschedule_count INT DEFAULT 0,
     delay_reason TEXT,
     PRIMARY KEY (issue_id, slot_id),
-    FOREIGN KEY (issue_id) REFERENCES Issue(issue_id),
-    FOREIGN KEY (slot_id) REFERENCES Slot(slot_id)
+    FOREIGN KEY (issue_id) REFERENCES Issue(issue_id) ON DELETE CASCADE,
+    FOREIGN KEY (slot_id) REFERENCES Slot(slot_id) ON DELETE CASCADE
 );
 
 -- REQUIRES
@@ -170,29 +170,26 @@ CREATE TABLE IF NOT EXISTS Requires (
     damage_severity ENUM('Minor','Moderate','Severe'),
     repair_cost_estimate DECIMAL(10,2) CHECK (repair_cost_estimate >= 0),
     PRIMARY KEY (issue_id, appliance_id),
-    FOREIGN KEY (issue_id) REFERENCES Issue(issue_id),
-    FOREIGN KEY (appliance_id) REFERENCES Appliance(appliance_id)
+    FOREIGN KEY (issue_id) REFERENCES Issue(issue_id) ON DELETE CASCADE,
+    FOREIGN KEY (appliance_id) REFERENCES Appliance(appliance_id) ON DELETE CASCADE
 );
 
 -- =============================================
--- SEED DATA (for demo/evaluation)
+-- SEED DATA
 -- =============================================
 
--- Locations
 INSERT IGNORE INTO Location (building_name, room_no, floor, location_type) VALUES
 ('Block A', '101', 1, 'Room'),
 ('Block B', 'Lab3', 2, 'Lab'),
 ('Main Block', 'Server Room', 0, 'Room');
 
--- Technicians
 INSERT IGNORE INTO Technician (technician_name, technician_phone, specialization, technician_availability_status) VALUES
 ('John Kumar', '9876543210', 'Network', 'Available'),
 ('Alice Raj', '9876543211', 'Hardware', 'Available'),
 ('Bob Singh', '9876543212', 'Software', 'Busy');
 
--- Sample Issues
 INSERT IGNORE INTO Issue (issue_id, issue_category, description, reported_date, status, building_name, room_no) VALUES
-(101, 'Network', 'WiFi down in Building A — no connectivity since morning', NOW(), 'In Progress', 'Block A', '101'),
-(102, 'Hardware', 'Printer out of ink, replacement needed urgently', NOW(), 'Pending', 'Block B', 'Lab3'),
-(103, 'Software', 'System needs OS update, causing boot delays', NOW(), 'Resolved', 'Main Block', 'Server Room'),
-(104, 'Network', 'Server core dump error, requires immediate attention', NOW(), 'Pending', 'Main Block', 'Server Room');
+(101, 'Network', 'WiFi down in Building A', NOW(), 'In Progress', 'Block A', '101'),
+(102, 'Hardware', 'Printer out of ink', NOW(), 'Pending', 'Block B', 'Lab3'),
+(103, 'Software', 'System needs OS update', NOW(), 'Resolved', 'Main Block', 'Server Room'),
+(104, 'Network', 'Server core dump error', NOW(), 'Pending', 'Main Block', 'Server Room');
