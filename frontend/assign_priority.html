@@ -9,30 +9,69 @@
         .proof-box {
             background: #f8fafc;
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 16px;
-            margin-top: 8px;
+            border-radius: 10px;
+            padding: 18px;
+            margin-top: 4px;
             display: none;
         }
-        .proof-box img {
-            max-width: 100%;
-            border-radius: 8px;
-            margin-top: 10px;
-            border: 1px solid var(--border-color);
-        }
-        .proof-box p {
-            margin: 4px 0;
+        .proof-box .detail-row {
+            display: flex;
+            gap: 8px;
             font-size: 14px;
+            margin-bottom: 6px;
+            align-items: flex-start;
+        }
+        .proof-box .detail-row .label {
+            font-weight: 600;
+            color: var(--text-main);
+            min-width: 90px;
+            flex-shrink: 0;
+        }
+        .proof-box .detail-row .value {
             color: var(--text-muted);
         }
-        .proof-box strong {
-            color: var(--text-main);
+        .proof-divider {
+            border: none;
+            border-top: 1px solid var(--border-color);
+            margin: 12px 0;
         }
-        .no-image {
+        .proof-image-wrap {
+            position: relative;
+        }
+        .proof-image-wrap img {
+            width: 100%;
+            max-height: 280px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-top: 6px;
+            display: none;
+        }
+        .open-link {
+            display: none;
+            font-size: 13px;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+        .open-link:hover { text-decoration: underline; }
+        .no-image-msg {
+            font-size: 13px;
             color: var(--text-muted);
             font-style: italic;
-            font-size: 13px;
         }
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge.pending   { background:#fee2e2; color:#dc2626; }
+        .badge.review    { background:#fef3c7; color:#d97706; }
+        .badge.progress  { background:#dbeafe; color:#2563eb; }
+        .badge.resolved  { background:#dcfce7; color:#16a34a; }
     </style>
 </head>
 <body>
@@ -47,173 +86,212 @@
     </nav>
 
     <div class="page-container">
-        <div class="card" style="max-width: 560px;">
+        <div class="card" style="max-width: 580px;">
             <h2>Assign Priority</h2>
-            <p class="subtitle">Review the issue and set urgency level</p>
+            <p class="subtitle">Review the reported issue and set its urgency level</p>
+
             <form id="priorityForm">
 
                 <div class="form-group">
-                    <label>Select Open Issue</label>
+                    <label>Select Issue</label>
                     <select id="issue_id" required>
                         <option value="" disabled selected>Loading issues...</option>
                     </select>
                 </div>
 
-                <!-- Issue detail + proof image preview -->
+                <!-- Issue detail + proof image — shown after selecting an issue -->
                 <div class="proof-box" id="proofBox">
-                    <p><strong>Category:</strong> <span id="detailCategory">-</span></p>
-                    <p><strong>Description:</strong> <span id="detailDesc">-</span></p>
-                    <p><strong>Reported:</strong> <span id="detailDate">-</span></p>
-                    <p><strong>Proof Image:</strong></p>
-                    <div id="imageContainer">
-                        <p class="no-image" id="noImageMsg">No image provided.</p>
-                        <img id="proofImg" style="display:none;" 
-                             alt="Proof of damage">
-                        <a id="proofLink" href="#" target="_blank" 
-                           style="display:none; font-size:13px; margin-top:6px; display:none;">
-                            Open image in new tab ↗
+                    <div class="detail-row">
+                        <span class="label">Category</span>
+                        <span class="value" id="detailCategory">—</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Description</span>
+                        <span class="value" id="detailDesc">—</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Reported</span>
+                        <span class="value" id="detailDate">—</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Status</span>
+                        <span class="value" id="detailStatus">—</span>
+                    </div>
+
+                    <hr class="proof-divider">
+
+                    <div class="detail-row" style="margin-bottom: 2px;">
+                        <span class="label">Proof Image</span>
+                    </div>
+                    <div class="proof-image-wrap">
+                        <p class="no-image-msg" id="noImageMsg">No image provided by student.</p>
+                        <img id="proofImg" alt="Proof of damage/issue">
+                        <br>
+                        <a class="open-link" id="proofLink" href="#" target="_blank">
+                            ↗ Open full image in new tab
                         </a>
                     </div>
                 </div>
 
-                <div class="form-group" style="margin-top: 16px;">
+                <div class="form-group" style="margin-top: 20px;">
                     <label>Priority Level</label>
                     <select id="priority" required>
                         <option value="" disabled selected>Select priority...</option>
-                        <option value="Critical">🔴 Critical</option>
-                        <option value="High">🟠 High</option>
-                        <option value="Medium">🟡 Medium</option>
-                        <option value="Low">🟢 Low</option>
+                        <option value="Critical">🔴 Critical — Needs immediate attention</option>
+                        <option value="High">🟠 High — Resolve within 24 hrs</option>
+                        <option value="Medium">🟡 Medium — Resolve within a week</option>
+                        <option value="Low">🟢 Low — Can be scheduled</option>
                     </select>
                 </div>
 
                 <p id="errorMsg" style="color:red; font-size:13px; display:none;"></p>
-                <p id="successMsg" style="color:green; font-weight:600; display:none;">
-                    ✅ Priority assigned successfully!
+                <p id="successMsg" style="color:#16a34a; font-weight:600; display:none;">
+                    ✅ Priority assigned! Redirecting...
                 </p>
-                <button type="submit" class="btn-primary" 
-                        style="margin-top:10px; background:#111827;">
+                <button type="submit" class="btn-primary"
+                        style="margin-top: 10px; background: #111827; width:100%;">
                     Save Priority
                 </button>
             </form>
         </div>
     </div>
 
-    <script>
-        const API = 'http://localhost:5000';
-        const role = localStorage.getItem('role') || 'Faculty';
+   <script>
+    const API = '';
+    const role = localStorage.getItem('role') || 'Admin'; // Default to Admin for this page
 
-        async function loadIssues() {
-            try {
-                const res = await fetch(`${API}/issues`, { headers: { role } });
-                const issues = await res.json();
-                const sel = document.getElementById('issue_id');
-                sel.innerHTML = '<option value="" disabled selected>Choose an issue...</option>';
-                issues
-                    .filter(i => !['Resolved', 'Closed'].includes(i.status))
-                    .forEach(i => {
-                        sel.innerHTML += `<option value="${i.issue_id}" 
-                            data-desc="${i.description}"
-                            data-category="${i.category || ''}"
-                            data-date="${i.reported_date || ''}"
-                            data-image="${i.proof_image || ''}">
-                            #${i.issue_id} — ${i.description.substring(0, 45)}
-                        </option>`;
-                    });
-            } catch (err) {
-                document.getElementById('issue_id').innerHTML = 
-                    '<option disabled>Could not load issues</option>';
+    function statusBadge(status) {
+        if (!status) return '—';
+        const s = status.toLowerCase();
+        let cls = 'pending';
+        if (s.includes('review')) cls = 'review';
+        else if (s.includes('progress') || s.includes('scheduled')) cls = 'progress';
+        else if (s.includes('resolved') || s.includes('closed')) cls = 'resolved';
+        return `<span class="badge ${cls}">${status}</span>`;
+    }
+
+    async function loadIssues() {
+        try {
+            // Fetching from your issues.py GET /issues route
+            const res = await fetch(`${API}/issues`, { headers: { role } });
+            const issues = await res.json();
+            const sel = document.getElementById('issue_id');
+            sel.innerHTML = '<option value="" disabled selected>Choose an issue...</option>';
+
+            // Filter out resolved issues for the priority assignment view
+            const open = issues.filter(i => !['Resolved', 'Closed'].includes(i.status));
+            
+            if (!open.length) {
+                sel.innerHTML = '<option disabled>No open issues found</option>';
+                return;
             }
+
+            open.forEach(i => {
+                const opt = document.createElement('option');
+                opt.value = i.issue_id;
+                opt.textContent = `#${i.issue_id} — ${i.description.substring(0, 48)}`;
+                
+                // Map fields correctly from your backend JSON response
+                opt.dataset.desc = i.description;
+                opt.dataset.category = i.category || i.issue_category || ''; // Handle naming variations
+                opt.dataset.date = i.reported_date || '';
+                opt.dataset.status = i.status || '';
+                opt.dataset.image = i.proof_image || ''; // This is your PostImages URL[cite: 7]
+                sel.appendChild(opt);
+            });
+        } catch (err) {
+            document.getElementById('issue_id').innerHTML =
+                '<option disabled>Could not load — is Flask running?</option>';
+        }
+        
+    }
+
+    // This listener triggers when the Admin selects an issue from the dropdown
+    document.getElementById('issue_id').addEventListener('change', function () {
+        const opt = this.options[this.selectedIndex];
+
+        // Update Text Details
+        document.getElementById('detailDesc').textContent     = opt.dataset.desc || '—';
+        document.getElementById('detailCategory').textContent = opt.dataset.category || '—';
+        document.getElementById('detailDate').textContent     = opt.dataset.date
+            ? opt.dataset.date.substring(0, 10) : '—';
+        document.getElementById('detailStatus').innerHTML = statusBadge(opt.dataset.status);
+
+        // Handle the Image Preview Logic
+        const imageUrl = opt.dataset.image;
+        const proofImg  = document.getElementById('proofImg');
+        const proofLink = document.getElementById('proofLink');
+        const noMsg     = document.getElementById('noImageMsg');
+
+        // Check if the image exists and isn't a null string
+        if (imageUrl && imageUrl !== 'null' && imageUrl.trim() !== '') {
+            proofImg.src = imageUrl;
+            proofImg.style.display = 'block';
+            proofLink.href = imageUrl;
+            proofLink.style.display = 'inline-block';
+            noMsg.style.display = 'none';
+
+            // Error handling if the PostImages link is broken or formatted wrong
+            proofImg.onerror = () => {
+                proofImg.style.display = 'none';
+                noMsg.textContent = 'Image URL invalid or could not be loaded (Check if link is Direct).';
+                noMsg.style.display = 'block';
+                proofLink.style.display = 'inline-block'; 
+            };
+        } else {
+            // Reset to "No Image" state if field is empty in DB
+            proofImg.style.display = 'none';
+            proofLink.style.display = 'none';
+            noMsg.textContent = 'No image provided by student.';
+            noMsg.style.display = 'block';
         }
 
-        // Show issue details + proof image when admin selects an issue
-        document.getElementById('issue_id').addEventListener('change', function() {
-            const selected = this.options[this.selectedIndex];
-            const desc = selected.getAttribute('data-desc');
-            const category = selected.getAttribute('data-category');
-            const date = selected.getAttribute('data-date');
-            const imageUrl = selected.getAttribute('data-image');
+        // Make the detail box visible
+        document.getElementById('proofBox').style.display = 'block';
+    });
 
-            document.getElementById('detailDesc').textContent = desc || '-';
-            document.getElementById('detailCategory').textContent = category || '-';
-            document.getElementById('detailDate').textContent = 
-                date ? date.substring(0, 10) : '-';
+    // Form Submission Logic
+    document.getElementById('priorityForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const errorMsg   = document.getElementById('errorMsg');
+        const successMsg = document.getElementById('successMsg');
+        
+        const issue_id = document.getElementById('issue_id').value;
+        const priority = document.getElementById('priority').value;
 
-            const proofImg = document.getElementById('proofImg');
-            const proofLink = document.getElementById('proofLink');
-            const noImageMsg = document.getElementById('noImageMsg');
+        try {
+            // Update status in backend[cite: 7]
+            const res = await fetch(`${API}/issues/update-status/${issue_id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'role': role
+                },
+                body: JSON.stringify({ status: 'Under Review', priority })
+            });
 
-            if (imageUrl && imageUrl !== 'null' && imageUrl !== '') {
-                proofImg.src = imageUrl;
-                proofImg.style.display = 'block';
-                proofLink.href = imageUrl;
-                proofLink.style.display = 'inline-block';
-                noImageMsg.style.display = 'none';
-
-                // Handle broken image URLs
-                proofImg.onerror = () => {
-                    proofImg.style.display = 'none';
-                    proofLink.style.display = 'inline-block';
-                    noImageMsg.textContent = 'Image could not load. ';
-                    noImageMsg.style.display = 'block';
-                };
-            } else {
-                proofImg.style.display = 'none';
-                proofLink.style.display = 'none';
-                noImageMsg.textContent = 'No image provided.';
-                noImageMsg.style.display = 'block';
-            }
-
-            document.getElementById('proofBox').style.display = 'block';
-        });
-
-        document.getElementById('priorityForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const errorMsg = document.getElementById('errorMsg');
-            const successMsg = document.getElementById('successMsg');
-            errorMsg.style.display = 'none';
-            successMsg.style.display = 'none';
-
-            // Priority is stored via update-status for now
-            // You can extend this to a dedicated priority column later
-            const issue_id = document.getElementById('issue_id').value;
-            const priority = document.getElementById('priority').value;
-
-            try {
-                const res = await fetch(`${API}/issues/update-status/${issue_id}`, {
-                    method: 'PUT',
-                    headers: { 
-                        'Content-Type': 'application/json', 
-                        'role': role 
-                    },
-                    body: JSON.stringify({ 
-                        status: 'Under Review',
-                        priority: priority 
-                    })
-                });
-                const data = await res.json();
-
-                if (!res.ok) {
-                    errorMsg.textContent = data.error || 'Failed to assign priority.';
-                    errorMsg.style.display = 'block';
-                    return;
-                }
-
+            if (res.ok) {
                 successMsg.style.display = 'block';
                 setTimeout(() => window.location.href = 'admin_dashboard.html', 1500);
-            } catch (err) {
-                errorMsg.textContent = 'Cannot connect to server. Is Flask running?';
+            } else {
+                const data = await res.json();
+                errorMsg.textContent = data.error || 'Failed to update.';
                 errorMsg.style.display = 'block';
             }
-        });
+        } catch (err) {
+            errorMsg.textContent = 'Server connection failed.';
+            errorMsg.style.display = 'block';
+        }
+    });
 
-        document.getElementById('logoutBtn').addEventListener('click', function(e) {
-            e.preventDefault();
-            localStorage.clear();
-            window.location.href = 'login.html';
-        });
+    document.getElementById('logoutBtn').addEventListener('click', function (e) {
+        e.preventDefault();
+        localStorage.clear();
+        window.location.href = 'login.html';
+    });
 
-        loadIssues();
-    </script>
+    // Initial load
+    loadIssues();
+</script>
 </body>
 </html>
