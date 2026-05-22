@@ -3,34 +3,35 @@ from db import mysql
 
 issue_bp = Blueprint('issue', __name__)
 
-# ================= GET ALL ISSUES =================
+# GET ALL ISSUES 
 @issue_bp.route('/issues', methods=['GET'])
 def get_issues():
     cursor = mysql.connection.cursor()
     cursor.execute("""
-        SELECT i.issue_id, i.description, i.status, i.issue_category,
-               i.reported_date, i.building_name, i.room_no
-        FROM Issue i
-        ORDER BY i.reported_date DESC
-    """)
+    SELECT i.issue_id, i.description, i.status, i.issue_category,
+           i.reported_date, i.building_name, i.room_no, i.proof_image
+    FROM Issue i
+    ORDER BY i.reported_date DESC
+""")
     rows = cursor.fetchall()
     cursor.close()
 
     result = []
     for r in rows:
-        result.append({
-            "issue_id": r[0],
-            "description": r[1],
-            "status": r[2],
-            "category": r[3],
-            "reported_date": str(r[4]) if r[4] else None,
-            "building_name": r[5],
-            "room_no": r[6]
-        })
+       result.append({
+    "issue_id": r[0],
+    "description": r[1],
+    "status": r[2],
+    "category": r[3],
+    "reported_date": str(r[4]) if r[4] else None,
+    "building_name": r[5],
+    "room_no": r[6],
+    "proof_image": r[7]       # ← this line was missing
+})
     return jsonify(result)
 
 
-# ================= GET SINGLE ISSUE =================
+# GET SINGLE ISSUE 
 @issue_bp.route('/issues/<int:id>', methods=['GET'])
 def get_issue(id):
     cursor = mysql.connection.cursor()
@@ -44,20 +45,24 @@ def get_issue(id):
     return jsonify({"issue_id": r[0], "description": r[1], "status": r[2], "category": r[3]})
 
 
-# ================= CREATE ISSUE =================
+#  CREATE ISSUE 
 @issue_bp.route('/issues', methods=['POST'])
 def create_issue():
     data = request.json
+    print("Received data:", data)   # ← ADD THIS DEBUG LINE
+
+    proof_image = data.get('proof_image', None)
+    if proof_image == '':
+        proof_image = None
 
     cursor = mysql.connection.cursor()
     cursor.execute("""
-        INSERT INTO Issue (issue_category, description, reported_date, status)
-        VALUES (%s, %s, NOW(), 'Pending')
-    """, (data['category'], data['description']))
+        INSERT INTO Issue (issue_category, description, reported_date, status, proof_image)
+        VALUES (%s, %s, NOW(), 'Pending', %s)
+    """, (data['category'], data['description'], proof_image))
     mysql.connection.commit()
     issue_id = cursor.lastrowid
 
-    # Link to Reports table if user_id provided
     user_id = data.get('user_id')
     if user_id:
         cursor.execute("""
@@ -69,8 +74,7 @@ def create_issue():
     cursor.close()
     return jsonify({"message": "Issue reported successfully", "issue_id": issue_id})
 
-
-# ================= UPDATE STATUS =================
+# UPDATE STATUS 
 @issue_bp.route('/issues/update-status/<int:id>', methods=['PUT'])
 def update_status(id):
     data = request.json
@@ -87,7 +91,7 @@ def update_status(id):
     return jsonify({"message": "Status updated successfully"})
 
 
-# ================= ASSIGN TECHNICIAN =================
+# ASSIGN TECHNICIAN 
 @issue_bp.route('/issues/assign', methods=['POST'])
 def assign_technician():
     data = request.json
@@ -123,7 +127,7 @@ def assign_technician():
     return jsonify({"message": "Technician assigned successfully"})
 
 
-# ================= GET ALL TECHNICIANS =================
+# GET ALL TECHNICIANS 
 @issue_bp.route('/technicians', methods=['GET'])
 def get_technicians():
     cursor = mysql.connection.cursor()
