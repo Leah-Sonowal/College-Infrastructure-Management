@@ -3,96 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Update Status - Infra Flow</title>
+    <title>View Issues - Infra Flow</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        .thumb {
+            width: 48px;
+            height: 48px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: transform 0.15s;
+        }
+        .thumb:hover { transform: scale(1.08); }
+
+        /* Lightbox */
+        #lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.82);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+        #lightbox.open { display: flex; }
+        #lightbox img {
+            max-width: 90vw;
+            max-height: 85vh;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        #lightbox .close-btn {
+            position: absolute;
+            top: 24px; right: 32px;
+            color: white;
+            font-size: 32px;
+            cursor: pointer;
+            line-height: 1;
+            user-select: none;
+        }
+    </style>
 </head>
 <body>
     <nav>
         <h2>Infra Flow</h2>
         <div class="nav-links">
-            <a href="admin_dashboard.html">Dashboard</a>
-            <a href="view_issues.html">View Issues</a>
+            <a href="front.html">Home</a>
+            <a href="report_issue.html">Report Issue</a>
             <a href="login.html" class="btn-nav" id="logoutBtn">Logout</a>
         </div>
     </nav>
-    <div class="page-container">
-        <div class="card">
-            <h2>Update Issue Status</h2>
-            <p class="subtitle">Modify the current status of an issue</p>
-            <form id="statusForm">
-                <div class="form-group">
-                    <label>Select Issue</label>
-                    <select id="issue_id" required>
-                        <option value="" disabled selected>Loading issues...</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Update Status</label>
-                    <select id="status" required>
-                        <option value="" disabled selected>Select new status</option>
-                        <option value="Pending">Pending</option>
-                        <option value="Under Review">Under Review</option>
-                        <option value="Scheduled">Scheduled</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Resolved">Resolved</option>
-                        <option value="Closed">Closed</option>
-                        <option value="Escalated">Escalated</option>
-                    </select>
-                </div>
-                <p id="errorMsg" style="color:red; font-size:13px; display:none;"></p>
-                <p id="successMsg" style="color:green; font-weight:600; display:none;">✅ Status updated successfully!</p>
-                <button type="submit" class="btn-primary" style="margin-top: 10px;">Update Status</button>
-            </form>
+
+    <div class="table-container">
+        <div class="table-header">
+            <h2>Reported Issues</h2>
+            <a href="report_issue.html" class="btn-primary"
+               style="padding:10px 18px; font-size:14px;">+ New Issue</a>
         </div>
+        <p id="loadingMsg" style="color:var(--text-muted); text-align:center;">
+            Loading issues...
+        </p>
+        <p id="errorMsg" style="color:red; text-align:center; display:none;"></p>
+        <table id="issuesTable" style="display:none;">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Proof</th>
+                    <th>Reported</th>
+                </tr>
+            </thead>
+            <tbody id="issuesBody"></tbody>
+        </table>
+        <p id="emptyMsg" style="text-align:center; color:var(--text-muted); display:none;">
+            No issues found. <a href="report_issue.html">Report one?</a>
+        </p>
+    </div>
+
+    <!-- Lightbox for full image -->
+    <div id="lightbox">
+        <span class="close-btn" id="closeLight">&times;</span>
+        <img id="lightboxImg" src="" alt="Proof image">
     </div>
 
     <script>
         const API = 'http://localhost:5000';
-        const role = localStorage.getItem('role') || 'Faculty';
 
-        async function loadIssues() {
-            const res = await fetch(`${API}/issues`, { headers: { role } });
-            const issues = await res.json();
-            const sel = document.getElementById('issue_id');
-            sel.innerHTML = '<option value="" disabled selected>Choose an issue...</option>';
-            issues.forEach(i => {
-                sel.innerHTML += `<option value="${i.issue_id}">#${i.issue_id} — ${i.description.substring(0, 50)} [${i.status}]</option>`;
-            });
+        function statusClass(status) {
+            if (!status) return 'open';
+            const s = status.toLowerCase().replace(/\s+/g, '-');
+            if (['pending', 'open'].includes(s)) return 'open';
+            if (['in-progress', 'scheduled', 'under-review'].includes(s)) return 'in-progress';
+            if (['resolved', 'closed'].includes(s)) return 'resolved';
+            return 'open';
         }
 
-        document.getElementById('statusForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const errorMsg = document.getElementById('errorMsg');
-            const successMsg = document.getElementById('successMsg');
-            errorMsg.style.display = 'none';
-            successMsg.style.display = 'none';
+        function openLightbox(url) {
+            document.getElementById('lightboxImg').src = url;
+            document.getElementById('lightbox').classList.add('open');
+        }
 
-            const issue_id = document.getElementById('issue_id').value;
-            const status = document.getElementById('status').value;
+        document.getElementById('closeLight').addEventListener('click', () => {
+            document.getElementById('lightbox').classList.remove('open');
+        });
+        document.getElementById('lightbox').addEventListener('click', function (e) {
+            if (e.target === this) this.classList.remove('open');
+        });
+
+        async function loadIssues() {
+            const role   = localStorage.getItem('role') || 'Student';
+            const userId = localStorage.getItem('user_id');
 
             try {
-                const res = await fetch(`${API}/issues/update-status/${issue_id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'role': role },
-                    body: JSON.stringify({ status })
-                });
-                const data = await res.json();
+                let url = `${API}/issues`;
+                if (role === 'Student' && userId) {
+                    url = `${API}/dashboard/user/${userId}`;
+                }
 
-                if (!res.ok) {
-                    errorMsg.textContent = data.error || 'Update failed.';
-                    errorMsg.style.display = 'block';
+                const res = await fetch(url, { headers: { role } });
+                const issues = await res.json();
+
+                document.getElementById('loadingMsg').style.display = 'none';
+
+                if (!issues.length) {
+                    document.getElementById('emptyMsg').style.display = 'block';
                     return;
                 }
 
-                successMsg.style.display = 'block';
-                setTimeout(() => window.location.href = 'admin_dashboard.html', 1500);
-            } catch (err) {
-                errorMsg.textContent = 'Cannot connect to server. Is Flask running?';
-                errorMsg.style.display = 'block';
-            }
-        });
+                const tbody = document.getElementById('issuesBody');
+                tbody.innerHTML = issues.map(i => {
+                    const imgCell = i.proof_image
+                        ? `<td>
+                             <img class="thumb" src="${i.proof_image}"
+                                  alt="proof"
+                                  onclick="openLightbox('${i.proof_image}')"
+                                  onerror="this.style.display='none';this.nextSibling.style.display='inline'">
+                             <span style="display:none; font-size:12px; color:var(--text-muted);">N/A</span>
+                           </td>`
+                        : `<td style="color:var(--text-muted); font-size:13px;">None</td>`;
 
-        document.getElementById('logoutBtn').addEventListener('click', function(e) {
+                    return `
+                        <tr>
+                            <td style="font-weight:500;">#${i.issue_id}</td>
+                            <td>${i.description}</td>
+                            <td>${i.category || i.issue_category || '—'}</td>
+                            <td>${i.building_name
+                                ? i.building_name + (i.room_no ? ' / ' + i.room_no : '')
+                                : '—'}</td>
+                            <td><span class="status ${statusClass(i.status)}">${i.status}</span></td>
+                            ${imgCell}
+                            <td>${i.reported_date ? i.reported_date.substring(0, 10) : '—'}</td>
+                        </tr>`;
+                }).join('');
+
+                document.getElementById('issuesTable').style.display = 'table';
+            } catch (err) {
+                document.getElementById('loadingMsg').style.display = 'none';
+                const e = document.getElementById('errorMsg');
+                e.textContent = 'Could not load issues. Is Flask running?';
+                e.style.display = 'block';
+            }
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', function (e) {
             e.preventDefault();
             localStorage.clear();
             window.location.href = 'login.html';
