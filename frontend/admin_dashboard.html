@@ -6,14 +6,51 @@
     <title>Admin Dashboard - Infra Flow</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        .stat-row { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:24px; }
-        .stat-card { background:var(--surface-color); border:1px solid var(--border-color); border-radius:var(--radius); padding:20px 28px; flex:1; min-width:140px; text-align:center; box-shadow:var(--shadow-sm); }
-        .stat-card .num { font-size:32px; font-weight:800; color:var(--primary-color); }
-        .stat-card .label { font-size:13px; color:var(--text-muted); margin-top:4px; }
-        .priority.critical { background:#fee2e2; color:#dc2626; }
-        .priority.high { background:#ffedd5; color:#ea580c; }
-        .priority.medium { background:#fef3c7; color:#d97706; }
-        .priority.low { background:#dcfce7; color:#16a34a; }
+        .stat-row {
+            display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 20px 28px;
+            flex: 1; min-width: 130px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+        }
+        .stat-card .num  { font-size: 32px; font-weight: 800; color: var(--primary-color); }
+        .stat-card .lbl  { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+        /* Proof thumbnail in table */
+        .thumb {
+            width: 40px; height: 40px;
+            object-fit: cover;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: transform 0.15s;
+        }
+        .thumb:hover { transform: scale(1.1); }
+
+        /* Lightbox */
+        #lightbox {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.82);
+            z-index: 999;
+            justify-content: center; align-items: center;
+        }
+        #lightbox.open { display: flex; }
+        #lightbox img {
+            max-width: 90vw; max-height: 85vh;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        #lightbox .close-btn {
+            position: absolute; top: 24px; right: 32px;
+            color: white; font-size: 32px;
+            cursor: pointer; user-select: none;
+        }
     </style>
 </head>
 <body>
@@ -28,23 +65,24 @@
         </div>
     </nav>
 
-    <div class="page-container" style="padding-top: 40px; padding-bottom: 20px;">
+    <div class="page-container" style="padding-top:40px; padding-bottom:20px;">
         <div class="card" style="max-width:1000px; text-align:left; margin-bottom:30px;">
             <h2>Admin Dashboard</h2>
-            <p class="subtitle">Welcome, <span id="adminName">Admin</span>. System overview below.</p>
+            <p class="subtitle">Welcome, <span id="adminName">Admin</span>.</p>
 
-            <!-- Stats -->
-            <div class="stat-row" id="statsRow">
-                <div class="stat-card"><div class="num" id="statTotal">—</div><div class="label">Total Issues</div></div>
-                <div class="stat-card"><div class="num" id="statPending">—</div><div class="label">Pending</div></div>
-                <div class="stat-card"><div class="num" id="statProgress">—</div><div class="label">In Progress</div></div>
-                <div class="stat-card"><div class="num" id="statResolved">—</div><div class="label">Resolved</div></div>
+            <div class="stat-row">
+                <div class="stat-card"><div class="num" id="statTotal">—</div><div class="lbl">Total Issues</div></div>
+                <div class="stat-card"><div class="num" id="statPending">—</div><div class="lbl">Pending</div></div>
+                <div class="stat-card"><div class="num" id="statProgress">—</div><div class="lbl">In Progress</div></div>
+                <div class="stat-card"><div class="num" id="statResolved">—</div><div class="lbl">Resolved</div></div>
             </div>
 
-            <div style="display:flex; gap:15px; margin-top:10px; flex-wrap:wrap;">
+            <div style="display:flex; gap:15px; flex-wrap:wrap;">
                 <a href="assign_technician.html" class="btn-primary">Assign Technician</a>
-                <a href="assign_priority.html" class="btn-primary" style="background:#111827;">Assign Priority</a>
-                <a href="update_status.html" class="btn-primary" style="background:var(--surface-color); color:var(--primary-color); border:1px solid var(--primary-color);">Update Status</a>
+                <a href="assign_priority.html"   class="btn-primary" style="background:#111827;">Assign Priority</a>
+                <a href="update_status.html"     class="btn-primary"
+                   style="background:var(--surface-color); color:var(--primary-color);
+                          border:1px solid var(--primary-color);">Update Status</a>
             </div>
         </div>
     </div>
@@ -53,10 +91,11 @@
         <div class="table-header">
             <h2>All Issues</h2>
             <div style="display:flex; gap:10px; align-items:center;">
-                <label for="statusFilter" style="font-size:14px; font-weight:600;">Filter by status:</label>
+                <label for="statusFilter" style="font-size:14px; font-weight:600;">Filter:</label>
                 <select id="statusFilter" style="padding:8px 12px; font-size:14px;">
                     <option value="All">All</option>
                     <option value="Pending">Pending</option>
+                    <option value="Under Review">Under Review</option>
                     <option value="In Progress">In Progress</option>
                     <option value="Scheduled">Scheduled</option>
                     <option value="Resolved">Resolved</option>
@@ -68,10 +107,11 @@
         <table id="issuesTable" style="display:none;">
             <thead>
                 <tr>
-                    <th>Issue ID</th>
+                    <th>ID</th>
                     <th>Description</th>
                     <th>Category</th>
                     <th>Location</th>
+                    <th>Proof</th>
                     <th>Status</th>
                     <th>Date</th>
                 </tr>
@@ -80,50 +120,81 @@
         </table>
     </div>
 
-    <footer>
-        <p>© 2026 Infra Flow. All rights reserved.</p>
-    </footer>
+    <!-- Lightbox -->
+    <div id="lightbox">
+        <span class="close-btn" id="closeLight">&times;</span>
+        <img id="lightboxImg" src="" alt="Proof">
+    </div>
+
+    <footer><p>© 2026 Infra Flow. All rights reserved.</p></footer>
 
     <script>
-        const API = 'http://localhost:5000';
+        const API  = 'http://localhost:5000';
         const role = localStorage.getItem('role') || 'Faculty';
         let allIssues = [];
 
-        document.getElementById('adminName').textContent = localStorage.getItem('name') || 'Admin';
+        document.getElementById('adminName').textContent =
+            localStorage.getItem('name') || 'Admin';
 
-        function statusClass(status) {
-            if (!status) return 'open';
-            const s = status.toLowerCase().replace(' ', '-');
-            if (s === 'pending') return 'open';
-            if (['in-progress','scheduled','under-review'].includes(s)) return 'in-progress';
-            if (['resolved','closed'].includes(s)) return 'resolved';
+        function statusClass(s) {
+            if (!s) return 'open';
+            const v = s.toLowerCase().replace(/\s+/g, '-');
+            if (v === 'pending') return 'open';
+            if (['in-progress','scheduled','under-review'].includes(v)) return 'in-progress';
+            if (['resolved','closed'].includes(v)) return 'resolved';
             return 'open';
         }
 
+        function openLightbox(url) {
+            document.getElementById('lightboxImg').src = url;
+            document.getElementById('lightbox').classList.add('open');
+        }
+        document.getElementById('closeLight').addEventListener('click', () =>
+            document.getElementById('lightbox').classList.remove('open'));
+        document.getElementById('lightbox').addEventListener('click', function (e) {
+            if (e.target === this) this.classList.remove('open');
+        });
+
         function renderIssues(issues) {
             const tbody = document.getElementById('issuesBody');
-            tbody.innerHTML = issues.map(i => `
-                <tr>
-                    <td style="font-weight:500;">#${i.issue_id}</td>
-                    <td>${i.description}</td>
-                    <td>${i.category || '-'}</td>
-                    <td>${i.building_name ? i.building_name + (i.room_no ? '/' + i.room_no : '') : '-'}</td>
-                    <td><span class="status ${statusClass(i.status)}">${i.status}</span></td>
-                    <td>${i.reported_date ? i.reported_date.substring(0, 10) : '-'}</td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = issues.map(i => {
+                const imgCell = i.proof_image
+                    ? `<td>
+                           <img class="thumb" src="${i.proof_image}"
+                                onclick="openLightbox('${i.proof_image}')"
+                                onerror="this.style.display='none';this.nextSibling.style.display='inline'"
+                                alt="proof">
+                           <span style="display:none; font-size:12px; color:var(--text-muted);">N/A</span>
+                       </td>`
+                    : `<td style="font-size:13px; color:var(--text-muted);">None</td>`;
+
+                return `
+                    <tr>
+                        <td style="font-weight:500;">#${i.issue_id}</td>
+                        <td>${i.description}</td>
+                        <td>${i.category || '—'}</td>
+                        <td>${i.building_name
+                            ? i.building_name + (i.room_no ? '/' + i.room_no : '')
+                            : '—'}</td>
+                        ${imgCell}
+                        <td><span class="status ${statusClass(i.status)}">${i.status}</span></td>
+                        <td>${i.reported_date ? i.reported_date.substring(0, 10) : '—'}</td>
+                    </tr>`;
+            }).join('');
             document.getElementById('issuesTable').style.display = 'table';
         }
 
         async function loadStats() {
             try {
-                const res = await fetch(`${API}/dashboard/status-count`, { headers: { role } });
+                const res  = await fetch(`${API}/dashboard/status-count`, { headers: { role } });
                 const data = await res.json();
                 const total = Object.values(data).reduce((a, b) => a + b, 0);
-                document.getElementById('statTotal').textContent = total;
+                document.getElementById('statTotal').textContent   = total;
                 document.getElementById('statPending').textContent = data['Pending'] || 0;
-                document.getElementById('statProgress').textContent = (data['In Progress'] || 0) + (data['Scheduled'] || 0);
-                document.getElementById('statResolved').textContent = (data['Resolved'] || 0) + (data['Closed'] || 0);
+                document.getElementById('statProgress').textContent =
+                    (data['In Progress'] || 0) + (data['Scheduled'] || 0) + (data['Under Review'] || 0);
+                document.getElementById('statResolved').textContent =
+                    (data['Resolved'] || 0) + (data['Closed'] || 0);
             } catch {}
         }
 
@@ -134,16 +205,17 @@
                 document.getElementById('loadingMsg').style.display = 'none';
                 renderIssues(allIssues);
             } catch (err) {
-                document.getElementById('loadingMsg').textContent = 'Could not load issues. Is Flask running?';
+                document.getElementById('loadingMsg').textContent =
+                    'Could not load issues. Is Flask running?';
             }
         }
 
-        document.getElementById('statusFilter').addEventListener('change', function() {
+        document.getElementById('statusFilter').addEventListener('change', function () {
             const val = this.value;
             renderIssues(val === 'All' ? allIssues : allIssues.filter(i => i.status === val));
         });
 
-        document.getElementById('logoutBtn').addEventListener('click', function(e) {
+        document.getElementById('logoutBtn').addEventListener('click', function (e) {
             e.preventDefault();
             localStorage.clear();
             window.location.href = 'login.html';
