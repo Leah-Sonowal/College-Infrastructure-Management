@@ -6,8 +6,34 @@
     <title>Report Issue - Infra Flow</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        #preview { display:none; max-width:100%; margin-top:10px; border-radius:8px; border:1px solid var(--border-color); }
-        .success-msg { display:none; color: green; font-weight:600; margin-top:10px; }
+        #preview {
+            display: none;
+            max-width: 100%;
+            margin-top: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            max-height: 240px;
+            object-fit: cover;
+        }
+        .image-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 6px;
+            display: block;
+            line-height: 1.5;
+        }
+        .image-hint a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .url-status {
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+        .url-status.valid   { color: #16a34a; }
+        .url-status.invalid { color: #dc2626; }
     </style>
 </head>
 <body>
@@ -28,14 +54,15 @@
             <form id="issueForm">
                 <div class="form-group">
                     <label>Description</label>
-                    <textarea id="description" rows="4" placeholder="Describe the issue in detail..." required></textarea>
+                    <textarea id="description" rows="4"
+                        placeholder="Describe the issue in detail..." required></textarea>
                 </div>
 
                 <div class="form-group">
                     <label>Category</label>
                     <select id="category" required>
                         <option value="">Select Category</option>
-                        <option value="Network">Network</option>
+                        <option value="Network">Network / Internet</option>
                         <option value="Electrical">Electrical</option>
                         <option value="Plumbing">Plumbing</option>
                         <option value="Furniture">Furniture</option>
@@ -54,42 +81,89 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Upload Photo (Proof)</label>
-                    <input type="file" id="image" accept="image/*">
-                    <img id="preview">
+                    <label>
+                        Proof Image URL
+                        <span style="color:var(--text-muted); font-weight:400;">(optional)</span>
+                    </label>
+                    <input type="text" id="proof_image"
+                        placeholder="https://i.postimg.cc/yourimage.jpg">
+                    <span class="url-status" id="urlStatus"></span>
+                    <span class="image-hint">
+                        Upload your photo to
+                        <a href="https://postimages.org" target="_blank">PostImages</a> or
+                        <a href="https://imgur.com/upload" target="_blank">Imgur</a>,
+                        then paste the <strong>direct image link</strong> here.
+                        Google Drive links are also auto-converted.
+                    </span>
+                    <img id="preview" alt="Proof image preview">
                 </div>
 
-                <p id="errorMsg" style="color:red; font-size:13px; display:none;"></p>
-                <p class="success-msg" id="successMsg">✅ Issue submitted successfully!</p>
+                <p id="errorMsg"
+                   style="color:red; font-size:13px; display:none;"></p>
+                <p id="successMsg"
+                   style="color:#16a34a; font-weight:600; display:none;">
+                    ✅ Issue submitted successfully! Redirecting...
+                </p>
                 <button type="submit" class="btn-primary">Submit Issue</button>
             </form>
         </div>
     </div>
 
     <script>
-        const API = 'http://localhost:5000';
+        const API = 'http://127.0.0.1:5000';
 
-        document.getElementById('image').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const preview = document.getElementById('preview');
-                preview.src = URL.createObjectURL(file);
-                preview.style.display = 'block';
+        // Convert Google Drive share links to direct image URL
+        function convertGDriveUrl(url) {
+            const match = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+            if (match) {
+                return `https://drive.google.com/uc?export=view&id=${match[1]}`;
             }
+            return url;
+        }
+
+        // Live preview
+        document.getElementById('proof_image').addEventListener('input', function () {
+            const raw       = this.value.trim();
+            const url       = convertGDriveUrl(raw);
+            const preview   = document.getElementById('preview');
+            const urlStatus = document.getElementById('urlStatus');
+
+            if (url !== raw) this.value = url; // rewrite if converted
+
+            if (!url) {
+                preview.style.display   = 'none';
+                urlStatus.style.display = 'none';
+                return;
+            }
+
+            preview.src            = url;
+            preview.style.display  = 'block';
+            urlStatus.style.display = 'block';
+
+            preview.onload = () => {
+                urlStatus.textContent = '✓ Image loaded successfully';
+                urlStatus.className   = 'url-status valid';
+            };
+            preview.onerror = () => {
+                preview.style.display  = 'none';
+                urlStatus.textContent  = '✗ Could not load image — check the URL';
+                urlStatus.className    = 'url-status invalid';
+            };
         });
 
-        document.getElementById('issueForm').addEventListener('submit', async function(e) {
+        document.getElementById('issueForm').addEventListener('submit', async function (e) {
             e.preventDefault();
-            const errorMsg = document.getElementById('errorMsg');
+            const errorMsg   = document.getElementById('errorMsg');
             const successMsg = document.getElementById('successMsg');
-            errorMsg.style.display = 'none';
+            errorMsg.style.display   = 'none';
             successMsg.style.display = 'none';
 
-            const description = document.getElementById('description').value;
-            const category = document.getElementById('category').value;
-            const urgency = document.getElementById('urgency').value === 'true';
-            const user_id = localStorage.getItem('user_id');
-            const role = localStorage.getItem('role') || 'Student';
+            const description = document.getElementById('description').value.trim();
+            const category    = document.getElementById('category').value;
+            const urgency     = document.getElementById('urgency').value === 'true';
+            const proof_image = document.getElementById('proof_image').value.trim();
+            const user_id     = localStorage.getItem('user_id');
+            const role        = localStorage.getItem('role') || 'Student';
 
             if (!description || !category) {
                 errorMsg.textContent = 'Please fill in all required fields.';
@@ -97,16 +171,21 @@
                 return;
             }
 
+            // ✅ DEBUG: log exactly what we're sending
+            const payload = { description, category, urgency, user_id, proof_image };
+            console.log('Submitting payload:', payload);
+
             try {
-                const res = await fetch(`${API}/issues`, {
+                const res  = await fetch(`${API}/issues`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'role': role
                     },
-                    body: JSON.stringify({ description, category, urgency, user_id })
+                    body: JSON.stringify(payload)
                 });
                 const data = await res.json();
+                console.log('Server response:', data);
 
                 if (!res.ok) {
                     errorMsg.textContent = data.error || 'Submission failed.';
@@ -116,15 +195,17 @@
 
                 successMsg.style.display = 'block';
                 this.reset();
-                document.getElementById('preview').style.display = 'none';
+                document.getElementById('preview').style.display   = 'none';
+                document.getElementById('urlStatus').style.display = 'none';
                 setTimeout(() => window.location.href = 'view_issues.html', 1500);
             } catch (err) {
+                console.error('Submit error:', err);
                 errorMsg.textContent = 'Cannot connect to server. Is Flask running?';
                 errorMsg.style.display = 'block';
             }
         });
 
-        document.getElementById('logoutBtn').addEventListener('click', function(e) {
+        document.getElementById('logoutBtn').addEventListener('click', function (e) {
             e.preventDefault();
             localStorage.clear();
             window.location.href = 'login.html';
